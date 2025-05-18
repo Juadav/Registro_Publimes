@@ -1,0 +1,58 @@
+{% extends "base/base.html" %}
+
+
+{% block title %}Editar Celular{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-phone me-2"></i>Editar Celular</h2>
+        <a href="{{ url_for('control_celulares') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i> Volver
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-pencil me-2"></i>Datos del Celular</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="imei" class="form-label">IMEI</label>
+                        <input type="text" class="form-control" id="imei" name="imei" value="{{ celular.imei }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="estado" class="form-label">Estado</label>
+                        <select class="form-select" id="estado" name="estado" required>
+                            <option value="DISPONIBLE" {% if celular.estado == 'DISPONIBLE' %}selected{% endif %}>Disponible</option>
+                            <option value="EN USO" {% if celular.estado == 'EN USO' %}selected{% endif %}>En uso</option>
+                            <option value="EN REPARACION" {% if celular.estado == 'EN REPARACION' %}selected{% endif %}>En reparación</option>
+                            <option value="DADO DE BAJA" {% if celular.estado == 'DADO DE BAJA' %}selected{% endif %}>Dado de baja</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="marca" class="form-label">Marca</label>
+                        <input type="text" class="form-control" id="marca" name="marca" value="{{ celular.marca }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="modelo" class="form-label">Modelo</label>
+                        <input type="text" class="form-control" id="modelo" name="modelo" value="{{ celular.modelo }}" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="fecha_adquisicion" class="form-label">Fecha de Adquisición</label>
+                    <input type="date" class="form-control" id="fecha_adquisicion" name="fecha_adquisicion" 
+                           value="{{ celular.fecha_adquisicion.strftime('%Y-%m-%d') if celular.fecha_adquisicion else '' }}">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-2"></i> Guardar Cambios
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

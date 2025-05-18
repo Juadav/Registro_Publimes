@@ -1,0 +1,41 @@
+{% extends "base/base.html" %}
+
+{% block title %}Control de Historial{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-clock-history me-2"></i>Control de Historial</h2>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Transferencias de Teléfonos</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Celular</th>
+                            <th>Supervisor</th>
+                            <th>Operador</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transferencia in transferencias %}
+                        <tr>
+                            <td>{{ transferencia.celular.marca }} {{ transferencia.celular.modelo }} ({{ transferencia.celular.imei }})</td>
+                            <td>{{ transferencia.supervisor_historial.nombre }}</td>
+                            <td>{{ transferencia.operador_publimes.nombre }}</td>
+                            <td>{{ transferencia.fecha_transferencia.strftime('%d/%m/%Y %H:%M') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

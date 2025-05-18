@@ -1,0 +1,56 @@
+{% extends "base/base.html" %}
+
+{% block title %}Nuevo Chip{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-sim me-2"></i>Nuevo Chip</h2>
+        <a href="{{ url_for('gestion_chips') }}" class="btn btn-secondary">
+
+            <i class="bi bi-arrow-left me-2"></i> Volver
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Datos del Chip</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="numero" class="form-label">Número</label>
+                        <input type="text" class="form-control" id="numero" name="numero" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="operadora" class="form-label">Operadora</label>
+                        <input type="text" class="form-control" id="operadora" name="operadora" required>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="tipo_linea" class="form-label">Tipo de Línea</label>
+                        <input type="text" class="form-control" id="tipo_linea" name="tipo_linea" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="estado_actual" class="form-label">Estado</label>
+                        <select class="form-select" id="estado_actual" name="estado_actual" required>
+                            {% for estado in estados %}
+                            <option value="{{ estado.nombre }}">{{ estado.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="fecha_activacion" class="form-label">Fecha de Activación</label>
+                    <input type="date" class="form-control" id="fecha_activacion" name="fecha_activacion">
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-2"></i> Guardar Chip
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "base/base.html" %}
+
+{% block title %}Control de Celulares{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-phone me-2"></i>Control de Celulares</h2>
+        <div class="d-flex">
+            <input type="text" class="form-control me-2" placeholder="Buscar celular...">
+            <button class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nuevo
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Listado de Celulares</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>IMEI</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Estado</th>
+                            <th>Chips</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for celular in celulares %}
+                        <tr>
+                            <td>{{ celular.imei }}</td>
+                            <td>{{ celular.marca }}</td>
+                            <td>{{ celular.modelo }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if celular.estado == 'DISPONIBLE' else 'warning' if celular.estado == 'EN USO' else 'danger' }}">
+                                    {{ celular.estado }}
+                                </span>
+                            </td>
+                            <td>{{ celular.chips|length }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('gestion_chips_celular', id_celular=celular.idCelular) }}" class="btn btn-sm btn-info" title="Ver chips">
+                                        <i class="bi bi-sim"></i>
+                                    </a>
+                                    <a href="{{ url_for('editar_celular', id=celular.idCelular) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('eliminar_celular', id=celular.idCelular) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Eliminar este celular?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,72 @@
+{% extends "base/base.html" %}
+
+{% block title %}Gestor de Chips{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-sim me-2"></i>Gestor de Chips</h2>
+        <a href="{{ url_for('nuevo_chip') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i> Nuevo Chip
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Listado de Chips</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Operadora</th>
+                            <th>Tipo</th>
+                            <th>Estado</th>
+                            <th>Asignado a</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chip in chips %}
+                        <tr>
+                            <td>{{ chip.numero }}</td>
+                            <td>{{ chip.operadora }}</td>
+                            <td>{{ chip.tipo_linea }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if chip.estado_actual == 'ACTIVO' else 'warning' if chip.estado_actual == 'INACTIVO' else 'danger' }}">
+                                    {{ chip.estado_actual }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if chip.celulares %}
+                                    {% for cc in chip.celulares if cc.fecha_remocion is none %}
+
+                                        {{ cc.celular.marca }} ({{ cc.celular.imei }})
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">No asignado</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('editar_chip', id=chip.idChip) }}" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('eliminar_chip', id=chip.idChip) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este chip?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
