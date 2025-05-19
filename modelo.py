@@ -1,8 +1,9 @@
 from extensions import db
 from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 class Rol(db.Model):
-    __tablename__ = 'rol'  # Nombre en singular y minúscula
+    __tablename__ = 'rol'
     idRol = db.Column(db.Integer, primary_key=True)
     nombreRol = db.Column(db.String(50), nullable=False)
     descripcion = db.Column(db.String(200))
@@ -17,7 +18,6 @@ class Usuario(db.Model):
     activo = db.Column(db.Boolean, default=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Add these relationships
     roles = db.relationship('UsuarioRol', back_populates='usuario')
     clientes_asignados = db.relationship('Cliente', back_populates='operador_publimes')
     envios_realizados = db.relationship('EnvioCampania', back_populates='usuario')
@@ -32,7 +32,6 @@ class UsuarioRol(db.Model):
     
     usuario = db.relationship('Usuario', back_populates='roles')
     rol = db.relationship('Rol', back_populates='usuarios')
-
 
 class Cliente(db.Model):
     __tablename__ = 'cliente'
@@ -169,3 +168,49 @@ class TransferenciaTelefono(db.Model):
     celular = db.relationship('Celular', back_populates='transferencias')
     supervisor_historial = db.relationship('Usuario', foreign_keys=[idSupervisorHistorial], back_populates='transferencias_supervisor')
     operador_publimes = db.relationship('Usuario', foreign_keys=[idOperadorPublimes], back_populates='transferencias_origen')
+
+def init_db(app):
+    """Función para inicializar la base de datos"""
+    with app.app_context():
+        db.create_all()
+        
+        # Crear roles básicos si no existen
+        if not Rol.query.first():
+            roles = [
+                Rol(nombreRol='Administrador General', descripcion='Acceso completo al sistema'),
+                Rol(nombreRol='Supervisor Operaciones', descripcion='Supervisa operaciones de mensajería'),
+                Rol(nombreRol='Operador Publimes', descripcion='Operador de campañas de mensajería'),
+                Rol(nombreRol='Supervisor Historial', descripcion='Supervisa el historial de equipos'),
+                Rol(nombreRol='Operador Historial', descripcion='Gestiona el historial de equipos')
+            ]
+            db.session.add_all(roles)
+            db.session.commit()
+        
+        # Crear usuario admin si no existe
+        if not Usuario.query.filter_by(username='admin').first():
+            admin = Usuario(
+                nombre='Administrador',
+                username='admin',
+                password=generate_password_hash('admin123'),
+                activo=True
+            )
+            db.session.add(admin)
+            db.session.commit()
+
+            admin_rol = UsuarioRol(
+                idUsuario=admin.idUsuario,
+                idRol=1  # ID del Administrador General
+            )
+            db.session.add(admin_rol)
+            db.session.commit()
+
+        # Crear estados básicos de chips si no existen
+        if not ChipEstado.query.first():
+            estados = [
+                ChipEstado(nombre='ACTIVO'),
+                ChipEstado(nombre='INACTIVO'),
+                ChipEstado(nombre='SUSPENDIDO'),
+                ChipEstado(nombre='PERDIDO')
+            ]
+            db.session.add_all(estados)
+            db.session.commit()

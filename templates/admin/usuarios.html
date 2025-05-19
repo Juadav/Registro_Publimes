@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-people me-2"></i>Gestión de Usuarios</h2>
-        <a href="{{ url_for('nuevo_usuario') }}" class="btn btn-primary">
+        <a href="{{ url_for('admin.nuevo_usuario') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-2"></i> Nuevo Usuario
         </a>
     </div>
@@ -19,27 +19,34 @@
                         <tr>
                             <th>Nombre</th>
                             <th>Usuario</th>
+                            <th>Estado</th>
                             <th>Roles</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for usuario in usuarios %}
+                        {% for usuario in usuarios.items %}
                         <tr>
                             <td>{{ usuario.nombre }}</td>
                             <td>{{ usuario.username }}</td>
-
                             <td>
-                                {% for rol in usuario.roles %}
-                                <span class="badge bg-primary">{{ rol.rol.nombreRol }}</span>
+                                {% if usuario.activo %}
+                                <span class="badge bg-success">Activo</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% for usuario_rol in usuario.roles %}
+                                <span class="badge bg-primary">{{ usuario_rol.rol.nombreRol }}</span>
                                 {% endfor %}
                             </td>
                             <td>
-                                <a href="{{ url_for('editar_usuario', id=usuario.idUsuario) }}" class="btn btn-sm btn-warning">
+                                <a href="{{ url_for('admin.editar_usuario', id=usuario.idUsuario) }}" class="btn btn-sm btn-warning" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form method="POST" action="{{ url_for('eliminar_usuario', id=usuario.idUsuario) }}" style="display:inline;">
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este usuario?')">
+                                <form method="POST" action="{{ url_for('admin.eliminar_usuario', id=usuario.idUsuario) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este usuario?')" title="Eliminar">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -48,6 +55,35 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                
+                <!-- Paginación -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if usuarios.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.gestion_usuarios', pagina=usuarios.prev_num) }}">Anterior</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in usuarios.iter_pages() %}
+                            {% if page_num %}
+                                <li class="page-item {% if page_num == usuarios.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin.gestion_usuarios', pagina=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">…</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if usuarios.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.gestion_usuarios', pagina=usuarios.next_num) }}">Siguiente</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>

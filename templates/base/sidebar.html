@@ -1,39 +1,56 @@
-<nav class="nav flex-column p-3" style="height: 100vh; position: sticky; top: 0;">
-    <div class="text-center mb-4">
+<nav class="d-flex flex-column bg-dark text-white" style="height: 100vh; position: sticky; top: 0;">
+    <!-- Header -->
+    <div class="text-center p-3 border-bottom">
         <i class="bi bi-phone" style="font-size: 2rem;"></i>
         <h5 class="mt-2">Menú Principal</h5>
     </div>
-    
-    <!-- Dashboard -->
-    <a href="{{ url_for('dashboard') }}" class="nav-link text-white mb-2">
-        <i class="bi bi-speedometer2 me-2"></i> Dashboard
-    </a>
-    
-    <!-- Módulo Historial -->
-    <div class="dropdown mb-2">
-        <a class="nav-link text-white dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-            <i class="bi bi-clock-history me-2"></i> Historial
+
+    <div class="flex-grow-1 overflow-auto p-3">
+        <!-- Panel de control -->
+        <a href="{{ url_for('login.panel_control') }}" class="nav-link text-white mb-2">
+            <i class="bi bi-speedometer2 me-2"></i> Panel de Control
         </a>
-        <ul class="dropdown-menu bg-dark">
-            <li><a class="dropdown-item text-white" href="{{ url_for('gestion_chips') }}">Gestor Chips</a></li>
-            <li><a class="dropdown-item text-white" href="{{ url_for('gestion_estados_chips') }}">Gestor Estados</a></li>
-            <li><a class="dropdown-item text-white" href="{{ url_for('gestion_celulares') }}">Gestor Celulares</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-white" href="{{ url_for('gestion_estados_chips') }}">Estados Chips</a></li>
-            <!-- Historial por chip se debe mostrar desde la vista de lista de chips, no aquí -->
-        </ul>
-    </div>
-    
-    <!-- Administración (solo para admin) -->
-    {% if 'Administrador General' in session.get('roles', []) %}
-    <div class="dropdown mb-2">
-        <a class="nav-link text-white dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-            <i class="bi bi-gear me-2"></i> Administración
+
+        <!-- Historial con colapso -->
+        {% if 'Supervisor Historial' in session.get('roles', []) or 'Administrador General' in session.get('roles', []) %}
+        <div class="mb-2">
+            <a class="nav-link text-white mb-1" data-bs-toggle="collapse" href="#historialMenu" role="button" aria-expanded="false" aria-controls="historialMenu">
+                <i class="bi bi-clock-history me-2"></i> Historial
+            </a>
+            <div class="collapse ps-4" id="historialMenu">
+                <a href="{{ url_for('historial.gestion_celulares') }}" class="nav-link text-white mb-1">
+                    <i class="bi bi-phone me-2"></i> Celulares
+                </a>
+                <a href="{{ url_for('historial.gestion_chips') }}" class="nav-link text-white mb-1">
+                    <i class="bi bi-sim me-2"></i> Chips
+                </a>
+                <a href="{{ url_for('historial.gestion_estados') }}" class="nav-link text-white">
+                    <i class="bi bi-list-check me-2"></i> Estados
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Administración con colapso -->
+        {% if 'Administrador General' in session.get('roles', []) %}
+        <div class="mb-2">
+            <a class="nav-link text-white mb-1" data-bs-toggle="collapse" href="#adminMenu" role="button" aria-expanded="false" aria-controls="adminMenu">
+                <i class="bi bi-gear me-2"></i> Administración
+            </a>
+            <div class="collapse ps-4" id="adminMenu">
+                <a href="{{ url_for('admin.gestion_usuarios') }}" class="nav-link text-white mb-1">
+                    <i class="bi bi-people me-2"></i> Usuarios
+                </a>
+                <a href="{{ url_for('admin.gestion_roles') }}" class="nav-link text-white">
+                    <i class="bi bi-person-badge me-2"></i> Roles
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Perfil -->
+        <a href="{{ url_for('login.ver_perfil') }}" class="nav-link text-white mb-2">
+            <i class="bi bi-person-circle me-2"></i> Mi Perfil
         </a>
-        <ul class="dropdown-menu bg-dark">
-            <li><a class="dropdown-item text-white" href="{{ url_for('gestion_usuarios') }}">Usuarios</a></li>
-            <li><a class="dropdown-item text-white" href="{{ url_for('gestion_roles') }}">Roles</a></li>
-        </ul>
     </div>
-    {% endif %}
 </nav>

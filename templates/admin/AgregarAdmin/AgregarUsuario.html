@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-person-plus me-2"></i>Nuevo Usuario</h2>
-        <a href="{{ url_for('gestion_usuarios') }}" class="btn btn-secondary">
+        <a href="{{ url_for('admin.gestion_usuarios') }}" class="btn btn-secondary">
             <i class="bi bi-arrow-left me-2"></i> Volver
         </a>
     </div>
@@ -14,29 +14,50 @@
     <div class="card shadow">
         <div class="card-body">
             <form method="POST">
+                <!-- Nombre Completo -->
                 <div class="mb-3">
                     <label for="nombre" class="form-label">Nombre Completo</label>
-                    <input type="text" class="form-control" id="nombre" name="nombre" required>
+                    <input type="text" class="form-control" id="nombre" name="nombre" required
+                           value="{{ request.form.get('nombre', '') }}">
                 </div>
+
+                <!-- Nombre de Usuario -->
                 <div class="mb-3">
                     <label for="username" class="form-label">Nombre de Usuario</label>
-                    <input type="text" class="form-control" id="username" name="username" required>
+                    <input type="text" class="form-control" id="username" name="username" required
+                           value="{{ request.form.get('username', '') }}">
+                    {% if error_username %}
+                    <div class="text-danger mt-2">
+                        <small>{{ error_username }}</small>
+                    </div>
+                    {% endif %}
                 </div>
+
+                <!-- Contraseña -->
                 <div class="mb-3">
                     <label for="password" class="form-label">Contraseña</label>
                     <input type="password" class="form-control" id="password" name="password" required>
+                    <div class="form-text">Mínimo 6 caracteres</div>
                 </div>
+
+                <!-- Roles -->
                 <div class="mb-3">
                     <label class="form-label">Roles</label>
                     {% for rol in roles %}
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="roles" id="rol{{ rol.idRol }}" value="{{ rol.idRol }}">
+                        <input class="form-check-input" type="checkbox" name="roles" id="rol{{ rol.idRol }}"
+                               value="{{ rol.idRol }}"
+                               {% if request.form and rol.idRol|string in request.form.getlist('roles') %}checked{% endif %}>
                         <label class="form-check-label" for="rol{{ rol.idRol }}">
-                            {{ rol.nombreRol }} <small class="text-muted">{{ rol.descripcion }}</small>
+                            {{ rol.nombreRol }}
+                            {% if rol.descripcion %}
+                            <small class="text-muted">({{ rol.descripcion }})</small>
+                            {% endif %}
                         </label>
                     </div>
                     {% endfor %}
                 </div>
+
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-save me-2"></i> Guardar Usuario
                 </button>

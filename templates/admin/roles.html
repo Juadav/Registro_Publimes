@@ -6,7 +6,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-shield-lock me-2"></i>Gestión de Roles</h2>
-        <a href="{{ url_for('nuevo_rol') }}" class="btn btn-primary">
+        <a href="{{ url_for('admin.nuevo_rol') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-2"></i> Nuevo Rol
         </a>
     </div>
@@ -14,31 +14,33 @@
     <div class="card shadow">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
                         <tr>
                             <th>Nombre</th>
                             <th>Descripción</th>
-                            <th>Acciones</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for rol in roles %}
                         <tr>
                             <td>{{ rol.nombreRol }}</td>
-                            <td>{{ rol.descripcion }}</td>
-                            <td>
-                                <a href="{{ url_for('editar_rol', id=rol.idRol) }}" class="btn btn-sm btn-warning">
+                            <td>{{ rol.descripcion or 'Sin descripción' }}</td>
+                            <td class="text-center">
+                                <a href="{{ url_for('admin.editar_rol', id=rol.idRol) }}" class="btn btn-sm btn-warning me-1" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                {% if rol.idRol != 1 %}  <!-- No permitir eliminar el rol de admin -->
-                                <form method="POST" action="{{ url_for('eliminar_rol', id=rol.idRol) }}" style="display:inline;">
+                                <form method="POST" action="{{ url_for('admin.eliminar_rol', id=rol.idRol) }}" class="d-inline" aria-label="Eliminar rol {{ rol.nombreRol }}">
                                     <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este rol?')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
-                                {% endif %}
                             </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No hay roles registrados.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
