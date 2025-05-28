@@ -16,16 +16,16 @@ class GestorAdministracion:
     
     def _registrar_rutas(self):
         # Rutas para usuarios
-        self.bp.route('/usuarios')(self.gestion_usuarios)
-        self.bp.route('/usuarios/nuevo', methods=['GET', 'POST'])(self.nuevo_usuario)
-        self.bp.route('/usuarios/<int:id>/editar', methods=['GET', 'POST'])(self.editar_usuario)
-        self.bp.route('/usuarios/<int:id>/eliminar', methods=['POST'])(self.eliminar_usuario)
+        self.bp.route('/usuarios', endpoint='gestion_usuarios')(self.gestion_usuarios)
+        self.bp.route('/usuarios/nuevo', methods=['GET', 'POST'], endpoint='nuevo_usuario')(self.nuevo_usuario)
+        self.bp.route('/usuarios/<int:id>/editar', methods=['GET', 'POST'], endpoint='editar_usuario')(self.editar_usuario)
+        self.bp.route('/usuarios/<int:id>/eliminar', methods=['POST'], endpoint='eliminar_usuario')(self.eliminar_usuario)
         
         # Rutas para roles
-        self.bp.route('/roles')(self.gestion_roles)
-        self.bp.route('/roles/nuevo', methods=['GET', 'POST'])(self.nuevo_rol)
-        self.bp.route('/roles/<int:id>/editar', methods=['GET', 'POST'])(self.editar_rol)
-        self.bp.route('/roles/<int:id>/eliminar', methods=['POST'])(self.eliminar_rol)
+        self.bp.route('/roles', endpoint='gestion_roles')(self.gestion_roles)
+        self.bp.route('/roles/nuevo', methods=['GET', 'POST'], endpoint='nuevo_rol')(self.nuevo_rol)
+        self.bp.route('/roles/<int:id>/editar', methods=['GET', 'POST'], endpoint='editar_rol')(self.editar_rol)
+        self.bp.route('/roles/<int:id>/eliminar', methods=['POST'], endpoint='eliminar_rol')(self.eliminar_rol)
 
     # ============ MÉTODOS PARA USUARIOS ============
     @requiere_login
@@ -50,8 +50,8 @@ class GestorAdministracion:
                     if Usuario.query.filter_by(username=form_data['usuario']['username']).first():
                         flash('El nombre de usuario ya está en uso', 'danger')
                         return render_template('admin/AgregarAdmin/AgregarUsuario.html', 
-                                            roles=Rol.query.all(), 
-                                            error_username="El nombre de usuario ya está en uso")
+                                             roles=Rol.query.all(), 
+                                             error_username="El nombre de usuario ya está en uso")
                     
                     nuevo_usuario = Usuario(**form_data['usuario'])
                     db.session.add(nuevo_usuario)
@@ -75,12 +75,10 @@ class GestorAdministracion:
         roles = Rol.query.all()
         return render_template('admin/AgregarAdmin/AgregarUsuario.html', roles=roles)
 
-
     def _validar_formulario_usuario(self):
         """Valida y procesa datos del formulario de usuario"""
         username = request.form.get('username')
         if Usuario.query.filter_by(username=username).first():
-            flash('Nombre de usuario ya existe', 'danger')
             return None
             
         password = request.form.get('password')
@@ -93,7 +91,8 @@ class GestorAdministracion:
                 'nombre': request.form.get('nombre'),
                 'username': username,
                 'password': generate_password_hash(password),
-                'activo': True
+                'activo': True,
+                'fecha_creacion': datetime.now()
             },
             'roles': [int(r) for r in request.form.getlist('roles')]
         }
@@ -142,8 +141,8 @@ class GestorAdministracion:
         
         roles = Rol.query.all()
         return render_template('admin/EditarAdmin/EditarUsuario.html', 
-                             usuario=usuario, 
-                             roles=roles)
+                            usuario=usuario, 
+                            roles=roles)
 
     @requiere_login
     @requiere_rol('Administrador General')
@@ -155,7 +154,9 @@ class GestorAdministracion:
             flash('No se puede eliminar el usuario admin', 'danger')
         else:
             try:
+                # Eliminar primero las relaciones en UsuarioRol
                 UsuarioRol.query.filter_by(idUsuario=id).delete()
+                # Luego eliminar el usuario
                 db.session.delete(usuario)
                 db.session.commit()
                 flash('Usuario eliminado exitosamente', 'success')
@@ -185,7 +186,8 @@ class GestorAdministracion:
                 try:
                     nuevo_rol = Rol(
                         nombreRol=nombre,
-                        descripcion=request.form.get('descripcion')
+                        descripcion=request.form.get('descripcion'),
+                        fecha_creacion=datetime.now()
                     )
                     db.session.add(nuevo_rol)
                     db.session.commit()
@@ -195,7 +197,7 @@ class GestorAdministracion:
                     db.session.rollback()
                     flash(f'Error al crear rol: {str(e)}', 'danger')
         
-        return render_template('admin/AgregarAdmin/AgregarRoL.html')
+        return render_template('admin/AgregarAdmin/AgregarRol.html')
 
     @requiere_login
     @requiere_rol('Administrador General')
@@ -214,7 +216,7 @@ class GestorAdministracion:
                 db.session.rollback()
                 flash(f'Error al actualizar rol: {str(e)}', 'danger')
         
-        return render_template('admin/EditarAdmin/EditarRoL.html', rol=rol)
+        return render_template('admin/EditarAdmin/EditarRol.html', rol=rol)
 
     @requiere_login
     @requiere_rol('Administrador General')

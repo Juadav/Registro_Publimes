@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, sessio
 from werkzeug.security import check_password_hash
 from modelo import Usuario
 from decoradores import requiere_login
+from flask import current_app
 
 bp_login = Blueprint('login', __name__, template_folder='templates')
 
@@ -19,9 +20,11 @@ def iniciar_sesion():
             session['nombre'] = usuario_db.nombre
             session['roles'] = [ur.rol.nombreRol for ur in usuario_db.roles]
             
+            current_app.logger.info(f'Inicio de sesión exitoso para el usuario: {usuario}')
             flash('Inicio de sesión exitoso', 'success')
             return redirect(url_for('login.panel_control'))
         
+        current_app.logger.warning(f'Intento de inicio de sesión fallido para el usuario: {usuario}')
         flash('Usuario o contraseña incorrectos', 'danger')
     
     return render_template('login/login.html')
@@ -30,7 +33,7 @@ def iniciar_sesion():
 @requiere_login
 def cerrar_sesion():
     usuario_actual = Usuario.query.get(session['id_usuario'])
-    print(f"Usuario {usuario_actual.username} cerró sesión")
+    current_app.logger.info(f"Usuario {usuario_actual.username} cerró sesión")
     session.clear()
     flash('Ha cerrado sesión correctamente', 'info')
     return redirect(url_for('login.iniciar_sesion'))
@@ -41,6 +44,7 @@ def panel_control():
     from modelo import Campania, Celular, Chip
     
     usuario_actual = Usuario.query.get(session['id_usuario'])
+    current_app.logger.info(f"Usuario {usuario_actual.username} accedió al panel de control")
     
     contexto = {
         'nombre': usuario_actual.nombre,
@@ -61,4 +65,5 @@ def panel_control():
 @requiere_login
 def ver_perfil():
     usuario = Usuario.query.get(session['id_usuario'])
+    current_app.logger.info(f"Usuario {usuario.username} accedió a su perfil")
     return render_template('login/perfil.html', usuario=usuario)

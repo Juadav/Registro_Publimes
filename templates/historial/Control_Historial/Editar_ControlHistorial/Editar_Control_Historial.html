@@ -1,0 +1,25 @@
+{% extends "base/base.html" %}
+
+{% block title %}Editar Celular (Auditoría){% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3><i class="bi bi-pencil-square me-2"></i>Editar Celular</h3>
+    <form method="POST">
+        <div class="mb-3">
+            <label>IMEI</label>
+            <input type="text" class="form-control" name="imei" value="{{ celular.imei }}" required>
+        </div>
+        <div class="mb-3">
+            <label>Marca</label>
+            <input type="text" class="form-control" name="marca" value="{{ celular.marca }}">
+        </div>
+        <div class="mb-3">
+            <label>Modelo</label>
+            <input type="text" class="form-control" name="modelo" value="{{ celular.modelo }}">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-pencil me-2"></i>Actualizar</button>
+        <a href="{{ url_for('control_historial.lista_celulares') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
