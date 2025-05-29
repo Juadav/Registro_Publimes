@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil de Usuario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="card shadow-lg">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Perfil de Usuario</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Nombre:</strong> {{ usuario.nombre }}</p>
+                <p><strong>Usuario:</strong> {{ usuario.username }}</p>
+                <p><strong>Email:</strong> {{ usuario.email }}</p>
+                <p><strong>Teléfono:</strong> {{ usuario.telefono }}</p>
+                <p><strong>Roles:</strong> 
+                    {% for rol in usuario.roles %}
+                        <span class="badge bg-secondary">{{ rol.rol.nombreRol }}</span>
+                    {% endfor %}
+                </p>
+                <a href="{{ url_for('login.panel_control') }}" class="btn btn-outline-primary mt-3">Volver al Panel</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

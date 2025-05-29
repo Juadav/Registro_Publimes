@@ -108,7 +108,8 @@ class Celular(db.Model):
     imei = db.Column(db.String(20), unique=True, nullable=False)
     marca = db.Column(db.String(50))
     modelo = db.Column(db.String(50))
-    fecha_adquisicion = db.Column(db.Date)
+    fecha_adquisicion = db.Column(db.Date, nullable=False)
+    fecha_registro =  db.Column(db.Date, nullable=False)
     estado = db.Column(db.String(20), default='DISPONIBLE')
     
     chips = db.relationship('CelularChip', back_populates='celular')
@@ -120,12 +121,18 @@ class Chip(db.Model):
     numero = db.Column(db.String(20), unique=True, nullable=False)
     operadora = db.Column(db.String(50), nullable=False)
     tipo_linea = db.Column(db.String(50))
-    fecha_activacion = db.Column(db.Date)
-    estado_actual = db.Column(db.String(20), default='ACTIVO')
     
+    fecha_adquisicion = db.Column(db.Date, nullable=False)
+    fecha_registro = db.Column(db.Date, nullable=False)
+    fecha_activacion = db.Column(db.Date, nullable=False)
+    
+    estado_actual = db.Column(db.String(50), default='ACTIVO')
+    tiene_whatsapp = db.Column(db.Boolean, default=False)
+
     celulares = db.relationship('CelularChip', back_populates='chip')
     estados = db.relationship('ChipEstadoRelacion', back_populates='chip')
     envios = db.relationship('DetalleEnvioChip', back_populates='chip')
+
 
 class CelularChip(db.Model):
     __tablename__ = 'celular_chip'
@@ -142,7 +149,7 @@ class CelularChip(db.Model):
 class ChipEstado(db.Model):
     __tablename__ = 'chip_estado'
     idEstado = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(50), nullable=False)
+    nombre = db.Column(db.String(50), nullable=False, unique=True)
     
     chips = db.relationship('ChipEstadoRelacion', back_populates='estado')
 
@@ -151,8 +158,8 @@ class ChipEstadoRelacion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     idChip = db.Column(db.Integer, db.ForeignKey('chip.idChip'), nullable=False)
     idEstado = db.Column(db.Integer, db.ForeignKey('chip_estado.idEstado'), nullable=False)
-    fecha_adquisicion = db.Column(db.DateTime, default=datetime.utcnow)
-    fecha_perdida = db.Column(db.DateTime)
+    fecha_inicio = db.Column(db.DateTime, default=datetime.utcnow)
+    fecha_fin = db.Column(db.DateTime)
     
     chip = db.relationship('Chip', back_populates='estados')
     estado = db.relationship('ChipEstado', back_populates='chips')
@@ -187,30 +194,39 @@ def init_db(app):
             db.session.commit()
         
         # Crear usuario admin si no existe
-        if not Usuario.query.filter_by(username='admin').first():
+        admin = Usuario.query.filter_by(username='admin').first()
+        if not admin:
             admin = Usuario(
                 nombre='Administrador',
                 username='admin',
-                password=generate_password_hash('admin123'),
+                password=generate_password_hash('admin123', method='sha256'),
                 activo=True
             )
             db.session.add(admin)
             db.session.commit()
-
-            admin_rol = UsuarioRol(
-                idUsuario=admin.idUsuario,
-                idRol=1  # ID del Administrador General
-            )
-            db.session.add(admin_rol)
-            db.session.commit()
-
-        # Crear estados básicos de chips si no existen
+        
+        # Asignar rol "Administrador General" al usuario admin si no tiene asignado ese rol
+        rol_admin = Rol.query.filter_by(nombreRol='Administrador General').first()
+        if rol_admin:
+            existe_relacion = UsuarioRol.query.filter_by(idUsuario=admin.idUsuario, idRol=rol_admin.idRol).first()
+            if not existe_relacion:
+                admin_rol = UsuarioRol(
+                    idUsuario=admin.idUsuario,
+                    idRol=rol_admin.idRol
+                )
+                db.session.add(admin_rol)
+                db.session.commit()
+        
+        # Crear estados de chip si no existen
         if not ChipEstado.query.first():
             estados = [
                 ChipEstado(nombre='ACTIVO'),
-                ChipEstado(nombre='INACTIVO'),
+                ChipEstado(nombre='BLOQUEADO'),
+                ChipEstado(nombre='WHATSAPP ACTIVO'),
+                ChipEstado(nombre='WHATSAPP INACTIVO'),
                 ChipEstado(nombre='SUSPENDIDO'),
-                ChipEstado(nombre='PERDIDO')
+                ChipEstado(nombre='PERDIDO'),
             ]
             db.session.add_all(estados)
             db.session.commit()
+

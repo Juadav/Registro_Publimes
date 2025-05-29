@@ -1,0 +1,120 @@
+{% extends "base/base.html" %}
+
+{% block title %}Control de Chips{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-sim me-2"></i>Control de Chips</h2>
+        <a href="{{ url_for('historial.chips_nuevo') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i> Nuevo Chip
+        </a>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="card mb-4 shadow">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('historial.chips_index') }}">
+                <div class="input-group">
+                    <input type="text" class="form-control" name="busqueda" placeholder="Buscar por número o operadora..." value="{{ busqueda }}">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Número</th>
+                            <th>Operadora</th>
+                            <th>Tipo Línea</th>
+                            <th>WhatsApp</th>
+                            <th>Estado</th>
+                            <th>Fecha Activación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chip in chips.items %}
+                        <tr>
+                            <td>{{ chip.numero }}</td>
+                            <td>{{ chip.operadora }}</td>
+                            <td>{{ chip.tipo_linea if chip.tipo_linea else 'N/A' }}</td>
+                            <td>
+                                {% if chip.tiene_whatsapp %}
+                                    <span class="badge bg-success">Sí</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if chip.estado_actual == 'ACTIVO' else 'warning' }}">
+                                    {{ chip.estado_actual }}
+                                </span>
+                            </td>
+                            <td>{{ chip.fecha_activacion.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('historial.chips_editar', id=chip.idChip) }}" class="btn btn-sm btn-warning" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if 'Administrador General' in usuario_actual.roles | map(attribute='rol.nombreRol') | list %}
+                                    <form method="POST" action="{{ url_for('historial.chips_eliminar', id=chip.idChip) }}" style="display:inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este chip?')" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <a href="{{ url_for('historial.chips_detalle', id=chip.idChip) }}" class="btn btn-sm btn-info" title="Detalle">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">No se encontraron chips</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Paginación -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if chips.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('historial.chips_index', pagina=chips.prev_num, busqueda=busqueda) }}">Anterior</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in chips.iter_pages() %}
+                            {% if page_num %}
+                                <li class="page-item {% if page_num == chips.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('historial.chips_index', pagina=page_num, busqueda=busqueda) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if chips.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('historial.chips_index', pagina=chips.next_num, busqueda=busqueda) }}">Siguiente</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

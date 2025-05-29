@@ -1,0 +1,85 @@
+{% extends "base/base.html" %}
+
+{% block title %}Control de Celulares{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-phone me-2"></i>Control de Celulares</h2>
+        <a href="{{ url_for('historial.celulares_nuevo') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i> Nuevo Celular
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>IMEI</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Fecha Adquisición</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for celular in celulares.items %}
+                        <tr>
+                            <td>{{ celular.imei }}</td>
+                            <td>{{ celular.marca }}</td>
+                            <td>{{ celular.modelo }}</td>
+                            <td>{{ celular.fecha_adquisicion.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ celular.fecha_registro.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <a href="{{ url_for('historial.celulares_editar', id=celular.idCelular) }}" class="btn btn-sm btn-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if 'Administrador General' in usuario_actual.roles | map(attribute='rol.nombreRol') | list %}
+                                <form method="POST" action="{{ url_for('historial.celulares_eliminar', id=celular.idCelular) }}" style="display:inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Eliminar este celular?')" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Paginación -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if celulares.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('historial.celulares_index', pagina=celulares.prev_num) }}">Anterior</a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for page_num in celulares.iter_pages() %}
+                            {% if page_num %}
+                                <li class="page-item {% if page_num == celulares.page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('historial.celulares_index', pagina=page_num) }}">{{ page_num }}</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if celulares.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('historial.celulares_index', pagina=celulares.next_num) }}">Siguiente</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

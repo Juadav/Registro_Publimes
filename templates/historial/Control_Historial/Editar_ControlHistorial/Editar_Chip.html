@@ -1,0 +1,64 @@
+{% extends "base/base.html" %}
+
+{% block title %}Editar Chip{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-sim me-2"></i>Editar Chip</h2>
+        <a href="{{ url_for('historial.chips_index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left me-2"></i> Volver
+        </a>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body">
+            <form method="POST">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="numero" class="form-label">Número</label>
+                        <input type="text" class="form-control" id="numero" name="numero" 
+                               value="{{ chip.numero }}" required pattern="593\d{9}"
+                               title="Debe comenzar con 593 y tener 12 dígitos en total">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="operadora" class="form-label">Operadora</label>
+                        <select class="form-select" id="operadora" name="operadora" required>
+                            <option value="Claro" {% if chip.operadora == 'Claro' %}selected{% endif %}>Claro</option>
+                            <option value="Movistar" {% if chip.operadora == 'Movistar' %}selected{% endif %}>Movistar</option>
+                            <option value="CNT" {% if chip.operadora == 'CNT' %}selected{% endif %}>CNT</option>
+                            <option value="Tuenti" {% if chip.operadora == 'Tuenti' %}selected{% endif %}>Tuenti</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="tipo_linea" class="form-label">Tipo de Línea</label>
+                        <select class="form-select" id="tipo_linea" name="tipo_linea" required>
+                            <option value="Prepago" {% if chip.tipo_linea == 'Prepago' %}selected{% endif %}>Prepago</option>
+                            <option value="Postpago" {% if chip.tipo_linea == 'Postpago' %}selected{% endif %}>Postpago</option>
+                            <option value="Corporativo" {% if chip.tipo_linea == 'Corporativo' %}selected{% endif %}>Corporativo</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="fecha_activacion" class="form-label">Fecha de Activación</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="fecha_activacion" 
+                                   name="fecha_activacion" value="{{ chip.fecha_activacion.strftime('%Y-%m-%d') }}" required>
+                            <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i> Guardar Cambios
+                    </button>
+                    <a href="{{ url_for('historial.chips_cambiar_estado', id=chip.idChip) }}" class="btn btn-warning ms-2">
+                        <i class="bi bi-arrow-repeat me-2"></i> Cambiar Estado
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

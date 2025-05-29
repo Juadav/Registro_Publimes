@@ -61,6 +61,8 @@ def panel_control():
     
     return render_template('dashboard.html', **contexto)
 
+
+
 @bp_login.route('/perfil', endpoint='ver_perfil')
 @requiere_login
 def ver_perfil():

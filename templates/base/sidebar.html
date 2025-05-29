@@ -1,46 +1,86 @@
-<nav class="d-flex flex-column bg-dark text-white" style="height: 100vh; position: sticky; top: 0;">
-    <!-- Header -->
-    <div class="text-center p-3 border-bottom">
-        <i class="bi bi-phone" style="font-size: 2rem;"></i>
-        <h5 class="mt-2">Menú Principal</h5>
-    </div>
+<!-- Sidebar -->
+<div class="d-flex flex-column flex-shrink-0 p-3 bg-light border-end vh-100" style="width: 250px;">
+    <!-- Título -->
+    <a href="{{ url_for('login.panel_control') }}" class="d-flex align-items-center mb-3 text-dark text-decoration-none">
+        <i class="bi bi-speedometer2 me-2 fs-4"></i>
+        <span class="fs-5 fw-semibold">Panel de Administración</span>
+    </a>
+    <hr>
 
-    <div class="flex-grow-1 overflow-auto p-3">
-        <!-- Panel de control -->
-        <a href="{{ url_for('login.panel_control') }}" class="nav-link text-white mb-2">
-            <i class="bi bi-speedometer2 me-2"></i> Panel de Control
-        </a>
-
-        <!-- Historial con colapso -->
-        {% if 'Supervisor Historial' in session.get('roles', []) or 'Administrador General' in session.get('roles', []) %}
-        <div class="mb-2">
-            <a class="nav-link text-white mb-1" data-bs-toggle="collapse" href="#historialMenu" role="button" aria-expanded="false" aria-controls="historialMenu">
-                <i class="bi bi-clock-history me-2"></i> Historial
+    <!-- Navegación principal -->
+    <ul class="nav nav-pills flex-column mb-auto">
+        <!-- Menú Usuarios (desplegable) -->
+        <li class="nav-item">
+            <a class="nav-link text-dark dropdown-toggle" data-bs-toggle="collapse" href="#usuariosCollapse" role="button" aria-expanded="false">
+                <i class="bi bi-people-fill me-2"></i>Usuarios
             </a>
-
-        </div>
-        {% endif %}
-
-        <!-- Administración con colapso -->
-        {% if 'Administrador General' in session.get('roles', []) %}
-        <div class="mb-2">
-            <a class="nav-link text-white mb-1" data-bs-toggle="collapse" href="#adminMenu" role="button" aria-expanded="false" aria-controls="adminMenu">
-                <i class="bi bi-gear me-2"></i> Administración
-            </a>
-            <div class="collapse ps-4" id="adminMenu">
-                <a href="{{ url_for('admin.gestion_usuarios') }}" class="nav-link text-white mb-1">
-                    <i class="bi bi-people me-2"></i> Usuarios
-                </a>
-                <a href="{{ url_for('admin.gestion_roles') }}" class="nav-link text-white">
-                    <i class="bi bi-person-badge me-2"></i> Roles
-                </a>
+            <div class="collapse" id="usuariosCollapse">
+                <ul class="nav flex-column ms-4">
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.gestion_usuarios') }}" class="nav-link text-dark">
+                            <i class="bi bi-person-lines-fill me-2"></i>Gestión de Usuarios
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('admin.gestion_roles') }}" class="nav-link text-dark">
+                            <i class="bi bi-shield-lock me-2"></i>Gestión de Roles
+                        </a>
+                    </li>
+                </ul>
             </div>
-        </div>
-        {% endif %}
+        </li>
+
+        <!-- Menú Historial (desplegable) -->
+        <li class="nav-item">
+            <a class="nav-link text-dark dropdown-toggle" data-bs-toggle="collapse" href="#historialCollapse" role="button" aria-expanded="false">
+                <i class="bi bi-phone me-2"></i>Control Historial
+            </a>
+            <div class="collapse" id="historialCollapse">
+                <ul class="nav flex-column ms-4">
+                    <li class="nav-item">
+                        <a href="{{ url_for('historial.dashboard') }}" class="nav-link text-dark">
+                            <i class="bi bi-speedometer me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('historial.celulares_index') }}" class="nav-link text-dark">
+                            <i class="bi bi-phone me-2"></i>Celulares
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('historial.chips_index') }}" class="nav-link text-dark">
+                            <i class="bi bi-sim me-2"></i>Chips
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ url_for('historial.estados_index') }}" class="nav-link text-dark">
+                            <i class="bi bi-list-check me-2"></i>Estados
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
 
         <!-- Perfil -->
-        <a href="{{ url_for('login.ver_perfil') }}" class="nav-link text-white mb-2">
-            <i class="bi bi-person-circle me-2"></i> Mi Perfil
+        <li class="nav-item">
+            <a href="{{ url_for('login.ver_perfil') }}" class="nav-link text-dark">
+                <i class="bi bi-person-circle me-2"></i>Mi Perfil
+            </a>
+        </li>
+    </ul>
+
+    <hr>
+
+    <!-- Usuario / Cerrar sesión -->
+    <div class="dropdown mt-auto">
+        <a href="#" class="d-flex align-items-center text-dark text-decoration-none dropdown-toggle" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
+            <img src="https://via.placeholder.com/32" alt="Avatar" width="32" height="32" class="rounded-circle me-2">
+            <strong>{{ session.get('usuario', 'Usuario') }}</strong>
         </a>
+        <ul class="dropdown-menu dropdown-menu-end text-small shadow" aria-labelledby="dropdownUser">
+            <li><a class="dropdown-item" href="{{ url_for('login.ver_perfil') }}">Mi Perfil</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="{{ url_for('login.logout') }}">Cerrar Sesión</a></li>
+        </ul>
     </div>
-</nav>
+</div>
