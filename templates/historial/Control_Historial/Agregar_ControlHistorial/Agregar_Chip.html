@@ -25,42 +25,97 @@
     <div class="card shadow">
         <div class="card-body">
             <form method="POST">
+                {{ form.hidden_tag() }}
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="numero" class="form-label">Número (comenzar con 593)</label>
-                        <input type="text" class="form-control" id="numero" name="numero" 
-                               placeholder="593XXXXXXXX" required pattern="593\d{9}"
-                               title="Debe comenzar con 593 y tener 12 dígitos en total">
-                        <small class="text-muted">Formato: 593 + 9 dígitos (12 dígitos total)</small>
+                        <label for="numero" class="form-label">Número (12 dígitos)</label>
+                        {{ form.numero(class="form-control", placeholder="593XXXXXXXXX") }}
+                        {% if form.numero.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {% for error in form.numero.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="col-md-6">
-                        <label for="operadora" class="form-label">Operadora</label>
-                        <select class="form-select" id="operadora" name="operadora" required>
-                            <option value="" selected disabled>Seleccione una operadora</option>
-                            <option value="Claro">Claro</option>
-                            <option value="Movistar">Movistar</option>
-                            <option value="CNT">CNT</option>
-                            <option value="Tuenti">Tuenti</option>
-                        </select>
+                        <label for="iccid" class="form-label">ICCID</label>
+                        {{ form.iccid(class="form-control", placeholder="Ingrese el ICCID (18-22 dígitos)") }}
+                        {% if form.iccid.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {% for error in form.iccid.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-6">
-                        <label for="tipo_linea" class="form-label">Tipo de Línea</label>
-                        <select class="form-select" id="tipo_linea" name="tipo_linea" required>
-                            <option value="" selected disabled>Seleccione un tipo</option>
-                            <option value="Prepago">Prepago</option>
-                            <option value="Postpago">Postpago</option>
-                            <option value="Corporativo">Corporativo</option>
-                        </select>
+                        <label for="operadora" class="form-label">Operadora</label>
+                        {{ form.operadora(class="form-select") }}
+                        {% if form.operadora.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {% for error in form.operadora.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="col-md-6">
-                        <label for="fecha_activacion" class="form-label">Fecha de Activación</label>
+                        <label for="tipo_linea" class="form-label">Tipo de Línea</label>
+                        {{ form.tipo_linea(class="form-select") }}
+                        {% if form.tipo_linea.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {% for error in form.tipo_linea.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="fecha_adquisicion" class="form-label">Fecha de Adquisición</label>
                         <div class="input-group">
-                            <input type="date" class="form-control" id="fecha_activacion" 
-                                   name="fecha_activacion" required>
+                            {{ form.fecha_adquisicion(class="form-control", type="date") }}
                             <span class="input-group-text"><i class="bi bi-calendar"></i></span>
                         </div>
+                        {% if form.fecha_adquisicion.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {% for error in form.fecha_adquisicion.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="fecha_registro" class="form-label">Fecha de Registro</label>
+                        <div class="input-group">
+                            {{ form.fecha_registro(class="form-control", type="date") }}
+                            <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                        </div>
+                        {% if form.fecha_registro.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {% for error in form.fecha_registro.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="fecha_activacion" class="form-label">Fecha de Activación</label>
+                        <div class="input-group">
+                            {{ form.fecha_activacion(class="form-control", type="date") }}
+                            <span class="input-group-text"><i class="bi bi-calendar"></i></span>
+                        </div>
+                        {% if form.fecha_activacion.errors %}
+                            <div class="alert alert-danger mt-2">
+                                {% for error in form.fecha_activacion.errors %}
+                                    <small>{{ error }}</small><br>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">

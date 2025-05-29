@@ -119,6 +119,7 @@ class Chip(db.Model):
     __tablename__ = 'chip'
     idChip = db.Column(db.Integer, primary_key=True)
     numero = db.Column(db.String(20), unique=True, nullable=False)
+    iccid = db.Column(db.String(22), unique=True, nullable=False)  # Nuevo campo para ICCID
     operadora = db.Column(db.String(50), nullable=False)
     tipo_linea = db.Column(db.String(50))
     
@@ -132,8 +133,7 @@ class Chip(db.Model):
     celulares = db.relationship('CelularChip', back_populates='chip')
     estados = db.relationship('ChipEstadoRelacion', back_populates='chip')
     envios = db.relationship('DetalleEnvioChip', back_populates='chip')
-
-
+    
 class CelularChip(db.Model):
     __tablename__ = 'celular_chip'
     idCelular = db.Column(db.Integer, db.ForeignKey('celular.idCelular'), primary_key=True)

@@ -1,12 +1,35 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
-from datetime import datetime
-from modelo import db, Celular, Chip, ChipEstado, CelularChip, ChipEstadoRelacion, Usuario
-from decoradores import requiere_login, requiere_rol
+from flask_login import current_user
 from flask_wtf import FlaskForm
-from wtforms import StringField, DateField, SubmitField
-from wtforms.validators import DataRequired, Length, Regexp
-from wtforms import ValidationError
+from wtforms import (
+    StringField, 
+    DateField, 
+    SubmitField, 
+    SelectField, 
+    BooleanField
+)
+from wtforms.validators import (
+    DataRequired, 
+    Length, 
+    Regexp, 
+    ValidationError, 
+    Optional
+)
+from datetime import datetime, timezone
 
+# Importación de modelos
+from modelo import (
+    db,
+    Celular,
+    Chip,
+    ChipEstado,
+    CelularChip,
+    ChipEstadoRelacion,
+    Usuario
+)
+
+# Importación de decoradores personalizados
+from decoradores import requiere_login, requiere_rol
 
 # ==================================================
 # CONTROLADOR PARA CELULARES
@@ -28,23 +51,22 @@ class CelularForm(FlaskForm):
         super(CelularForm, self).__init__(*args, **kwargs)
 
     def validate_imei(self, field):
-        # Validar que el IMEI sea único
-        if field.data != self.original_imei:  # Solo validar si cambió el IMEI
+        if field.data != self.original_imei:
             celular_existente = Celular.query.filter_by(imei=field.data).first()
             if celular_existente:
                 raise ValidationError('Este IMEI ya está registrado. Debe ser único.')
 
     def validate(self, extra_validators=None):
-        # Validación base
         if not super().validate(extra_validators=extra_validators):
             return False
 
-        # Validar que fecha_adquisicion no sea igual a fecha_registro
+        if not self.fecha_registro.data or not self.fecha_adquisicion.data:
+            return False
+
         if self.fecha_adquisicion.data == self.fecha_registro.data:
             self.fecha_adquisicion.errors.append('La fecha de adquisición no puede ser igual a la fecha de registro')
             return False
 
-        # Validar que fecha_adquisicion no sea mayor a fecha_registro
         if self.fecha_adquisicion.data > self.fecha_registro.data:
             self.fecha_adquisicion.errors.append('La fecha de adquisición no puede ser posterior a la fecha de registro')
             return False
@@ -74,6 +96,7 @@ class ControlCelular:
         return render_template('historial/Control_Historial/Control_Celular.html', 
                             celulares=celulares,
                             usuario_actual=usuario_actual)
+
     @requiere_login
     @requiere_rol('Administrador General', 'Supervisor Historial')
     def nuevo(self):
@@ -82,7 +105,6 @@ class ControlCelular:
         
         if form.validate_on_submit():
             try:
-                # Verificar si el IMEI ya existe
                 if Celular.query.filter_by(imei=form.imei.data).first():
                     flash('Este IMEI ya está registrado. Debe ser único.', 'danger')
                     return render_template('historial/Control_Historial/Agregar_ControlHistorial/Agregar_Celular.html',
@@ -94,7 +116,7 @@ class ControlCelular:
                     marca=form.marca.data,
                     modelo=form.modelo.data,
                     fecha_adquisicion=form.fecha_adquisicion.data,
-                    fecha_registro=form.fecha_registro.data or datetime.utcnow().date()
+                    fecha_registro=form.fecha_registro.data or datetime.now(timezone.utc).date()
                 )
                 db.session.add(celular)
                 db.session.commit()
@@ -117,7 +139,6 @@ class ControlCelular:
         
         if form.validate_on_submit():
             try:
-                # Verificar si el IMEI ya existe (solo si cambió)
                 if form.imei.data != celular.imei and Celular.query.filter_by(imei=form.imei.data).first():
                     flash('Este IMEI ya está registrado. Debe ser único.', 'danger')
                     return render_template('historial/Control_Historial/Editar_ControlHistorial/Editar_Celular.html', 
@@ -154,208 +175,212 @@ class ControlCelular:
             db.session.rollback()
             flash(f'Error al eliminar celular: {str(e)}', 'danger')
         return redirect(url_for('historial.celulares_index'))
+# ==================================================
+# CONTROLADOR PARA CHIPS
+# ==================================================
+class ChipForm(FlaskForm):
+    numero = StringField('Número', validators=[
+        DataRequired(),
+        Length(min=12, max=12, message='El número debe tener exactamente 12 dígitos'),
+        Regexp('^593[0-9]{9}$', message='El número debe comenzar con 593 y tener 12 dígitos en total')
+    ])
+    iccid = StringField('ICCID', validators=[
+        DataRequired(),
+        Length(min=18, max=22, message='El ICCID debe tener entre 18 y 22 dígitos'),
+        Regexp('^[0-9]+$', message='El ICCID solo debe contener números')
+    ])
+    operadora = SelectField('Operadora', choices=[
+        ('', 'Seleccione operadora'),
+        ('Claro', 'Claro'),
+        ('Movistar', 'Movistar'),
+        ('CNT', 'CNT'),
+        ('Tuenti', 'Tuenti'),
+    ], validators=[DataRequired()])
+    tipo_linea = SelectField('Tipo de Línea', choices=[
+        ('', 'Seleccione tipo'),
+        ('Prepago', 'Prepago'),
+        ('Postpago', 'Postpago'),
+    ], validators=[DataRequired()])
+    
+    fecha_adquisicion = DateField('Fecha de Adquisición', validators=[DataRequired()])
+    fecha_registro = DateField('Fecha de Registro', default=datetime.now, validators=[DataRequired()])
+    fecha_activacion = DateField('Fecha de Activación', validators=[DataRequired()])
+    
+    submit = SubmitField('Guardar')
 
-# ==================================================
-# CONTROLADOR PARA CHIPS - VERSIÓN CORREGIDA
-# ==================================================
+    def validate_numero(self, field):
+        chip_existente = Chip.query.filter_by(numero=field.data).first()
+        if chip_existente and (not hasattr(self, 'chip') or chip_existente.idChip != self.chip.idChip):
+            raise ValidationError('Este número ya está registrado')
+
+    def validate_iccid(self, field):
+        chip_existente = Chip.query.filter_by(iccid=field.data).first()
+        if chip_existente and (not hasattr(self, 'chip') or chip_existente.idChip != self.chip.idChip):
+            raise ValidationError('Este ICCID ya está registrado')
+
+    def validate(self, extra_validators=None):
+        if not super().validate(extra_validators=extra_validators):
+            return False
+
+        hoy = datetime.now(timezone.utc).date()
+        
+        if self.fecha_adquisicion.data > hoy:
+            self.fecha_adquisicion.errors.append('La fecha de adquisición no puede ser futura')
+            return False
+
+        if self.fecha_registro.data > hoy:
+            self.fecha_registro.errors.append('La fecha de registro no puede ser futura')
+            return False
+
+        if self.fecha_activacion.data > hoy:
+            self.fecha_activacion.errors.append('La fecha de activación no puede ser futura')
+            return False
+
+        if self.fecha_adquisicion.data > self.fecha_registro.data:
+            self.fecha_adquisicion.errors.append('La fecha de adquisición no puede ser posterior al registro')
+            return False
+
+        return True
+
 class ControlChip:
     def __init__(self, bp):
         self.bp = bp
         self._registrar_rutas()
-    
+
     def _registrar_rutas(self):
-        # Rutas para Chips
         self.bp.route('/chips', endpoint='chips_index')(self.index)
         self.bp.route('/chips/nuevo', methods=['GET', 'POST'], endpoint='chips_nuevo')(self.nuevo)
         self.bp.route('/chips/<int:id>/editar', methods=['GET', 'POST'], endpoint='chips_editar')(self.editar)
         self.bp.route('/chips/<int:id>/eliminar', methods=['POST'], endpoint='chips_eliminar')(self.eliminar)
-        self.bp.route('/chips/<int:id>/estado', methods=['GET', 'POST'], endpoint='chips_cambiar_estado')(self.cambiar_estado)
 
-    # Listado de Chips
     @requiere_login
     @requiere_rol('Administrador General', 'Supervisor Historial')
     def index(self):
         pagina = request.args.get('pagina', 1, type=int)
-        chips = Chip.query.join(ChipEstadoRelacion).join(ChipEstado)\
-                 .order_by(Chip.operadora, Chip.numero)\
-                 .paginate(page=pagina, per_page=10)
+        busqueda = request.args.get('busqueda', '')
         
+        query = Chip.query
+        
+        if busqueda:
+            query = query.filter(
+                (Chip.numero.contains(busqueda)) | 
+                (Chip.iccid.contains(busqueda)) | 
+                (Chip.operadora.contains(busqueda))
+            )
+            
+        chips = query.order_by(
+            Chip.fecha_registro.desc(), 
+            Chip.operadora, 
+            Chip.numero
+        ).paginate(page=pagina, per_page=10)
+
         usuario_actual = Usuario.query.get(session['id_usuario'])
-        return render_template('historial/Control_Historial/Control_Chip.html', 
+        return render_template('historial/Control_Historial/Control_Chip.html',
                             chips=chips,
+                            busqueda=busqueda,
                             usuario_actual=usuario_actual)
 
-    # Validar formato del número (593 para Ecuador)
-    def _validar_numero(self, numero):
-        if not numero.startswith('593'):
-            raise ValueError("El número debe comenzar con '593' (código de Ecuador)")
-        if not numero[3:].isdigit() or len(numero) != 12:
-            raise ValueError("El número debe contener 12 dígitos (incluyendo el 593)")
-        return True
-
-    # Nuevo Chip
     @requiere_login
     @requiere_rol('Administrador General', 'Supervisor Historial')
     def nuevo(self):
         usuario_actual = Usuario.query.get(session['id_usuario'])
-        if request.method == 'POST':
+        form = ChipForm()
+        
+        if form.validate_on_submit():
             try:
-                # Validar número
-                numero = request.form['numero'].strip()
-                self._validar_numero(numero)
-                
-                # Verificar si el número ya existe
-                if Chip.query.filter_by(numero=numero).first():
-                    raise ValueError("Este número de chip ya está registrado")
-                
-                # Crear chip
                 chip = Chip(
-                    numero=numero,
-                    operadora=request.form['operadora'],
-                    tipo_linea=request.form['tipo_linea'],
-                    fecha_activacion=datetime.strptime(request.form['fecha_activacion'], '%Y-%m-%d'),
-                    estado_actual='ACTIVO'  # Estado inicial
+                    numero=form.numero.data,
+                    iccid=form.iccid.data,
+                    operadora=form.operadora.data,
+                    tipo_linea=form.tipo_linea.data,
+                    fecha_adquisicion=form.fecha_adquisicion.data,
+                    fecha_registro=form.fecha_registro.data,
+                    fecha_activacion=form.fecha_activacion.data,
                 )
-                db.session.add(chip)
-                db.session.flush()  # Para obtener el ID
                 
-                # Registrar estado inicial
-                estado_inicial = ChipEstadoRelacion(
-                    idChip=chip.idChip,
-                    idEstado=1,  # Estado ACTIVO por defecto
-                    fecha_cambio=datetime.now(),
-                    observaciones='Estado inicial al registrar el chip'
-                )
-                db.session.add(estado_inicial)
+                db.session.add(chip)
                 db.session.commit()
                 
                 flash('Chip registrado exitosamente', 'success')
                 return redirect(url_for('historial.chips_index'))
-            except ValueError as ve:
-                db.session.rollback()
-                flash(f'Error de validación: {str(ve)}', 'danger')
+                
             except Exception as e:
                 db.session.rollback()
                 flash(f'Error al registrar chip: {str(e)}', 'danger')
-        
-        estados = ChipEstado.query.all()
-        return render_template('historial/Control_Historial/Agregar_ControlHistorial/Agregar_Chip.html',
-                            estados=estados,
-                            usuario_actual=usuario_actual)
 
-    # Editar Chip
+        return render_template('historial/Control_Historial/Agregar_ControlHistorial/Agregar_Chip.html',
+                             form=form,
+                             usuario_actual=usuario_actual)
+
     @requiere_login
     @requiere_rol('Administrador General', 'Supervisor Historial')
     def editar(self, id):
         usuario_actual = Usuario.query.get(session['id_usuario'])
         chip = Chip.query.get_or_404(id)
+        form = ChipForm(obj=chip)
+        form.chip = chip
         
-        if request.method == 'POST':
+        if form.validate_on_submit():
             try:
-                # Validar número si ha cambiado
-                nuevo_numero = request.form['numero'].strip()
-                if nuevo_numero != chip.numero:
-                    self._validar_numero(nuevo_numero)
-                    if Chip.query.filter(Chip.numero == nuevo_numero, Chip.idChip != id).first():
-                        raise ValueError("Este número de chip ya está registrado")
-                
-                # Actualizar datos
-                chip.numero = nuevo_numero
-                chip.operadora = request.form['operadora']
-                chip.tipo_linea = request.form['tipo_linea']
-                chip.fecha_activacion = datetime.strptime(request.form['fecha_activacion'], '%Y-%m-%d')
+                chip.numero = form.numero.data
+                chip.iccid = form.iccid.data
+                chip.operadora = form.operadora.data
+                chip.tipo_linea = form.tipo_linea.data
+                chip.fecha_adquisicion = form.fecha_adquisicion.data
+                chip.fecha_registro = form.fecha_registro.data
+                chip.fecha_activacion = form.fecha_activacion.data
                 
                 db.session.commit()
                 flash('Chip actualizado exitosamente', 'success')
                 return redirect(url_for('historial.chips_index'))
-            except ValueError as ve:
-                db.session.rollback()
-                flash(f'Error de validación: {str(ve)}', 'danger')
+                
             except Exception as e:
                 db.session.rollback()
                 flash(f'Error al actualizar chip: {str(e)}', 'danger')
-        
-        return render_template('historial/Control_Historial/Editar_ControlHistorial/Editar_Chip.html',
-                            chip=chip,
-                            usuario_actual=usuario_actual)
 
-    # Eliminar Chip
+        return render_template('historial/Control_Historial/Editar_ControlHistorial/Editar_Chip.html',
+                             form=form,
+                             chip=chip,
+                             usuario_actual=usuario_actual)
+
     @requiere_login
     @requiere_rol('Administrador General')
     def eliminar(self, id):
         chip = Chip.query.get_or_404(id)
         try:
-            # Primero eliminar los estados relacionados
-            ChipEstadoRelacion.query.filter_by(idChip=id).delete()
-            # Luego eliminar el chip
-            db.session.delete(chip)
-            db.session.commit()
-            flash('Chip eliminado exitosamente', 'success')
+            if chip.celulares:
+                flash('No se puede eliminar el chip porque está asignado a uno o más celulares', 'danger')
+            else:
+                db.session.delete(chip)
+                db.session.commit()
+                flash('Chip eliminado exitosamente', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al eliminar chip: {str(e)}', 'danger')
+            
         return redirect(url_for('historial.chips_index'))
 
-    # Cambiar Estado de Chip
-    @requiere_login
-    @requiere_rol('Administrador General', 'Supervisor Historial')
-    def cambiar_estado(self, id):
-        usuario_actual = Usuario.query.get(session['id_usuario'])
-        chip = Chip.query.get_or_404(id)
-        
-        if request.method == 'POST':
-            try:
-                id_estado = int(request.form['estado'])
-                observaciones = request.form.get('observaciones', '').strip()
-                
-                # Verificar si el estado es diferente al actual
-                estado_actual = ChipEstado.query.filter_by(nombre=chip.estado_actual).first()
-                if estado_actual and estado_actual.idEstado == id_estado:
-                    raise ValueError("El chip ya tiene este estado asignado")
-                
-                # Registrar nuevo estado
-                nuevo_estado = ChipEstadoRelacion(
-                    idChip=chip.idChip,
-                    idEstado=id_estado,
-                    fecha_cambio=datetime.now(),
-                    observaciones=observaciones or f"Cambio de estado a {ChipEstado.query.get(id_estado).nombre}"
-                )
-                db.session.add(nuevo_estado)
-                
-                # Actualizar estado actual del chip
-                chip.estado_actual = ChipEstado.query.get(id_estado).nombre
-                db.session.commit()
-                
-                flash('Estado del chip actualizado exitosamente', 'success')
-                return redirect(url_for('historial.chips_index'))
-            except ValueError as ve:
-                db.session.rollback()
-                flash(f'Error de validación: {str(ve)}', 'danger')
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Error al cambiar estado: {str(e)}', 'danger')
-        
-        estados = ChipEstado.query.all()
-        return render_template('historial/Control_Historial/Editar_ControlHistorial/Cambiar_Estado_Chip.html', 
-                            chip=chip, 
-                            estados=estados,
-                            usuario_actual=usuario_actual)
 # ==================================================
 # CONTROLADOR PARA ESTADOS DE CHIPS
 # ==================================================
+class EstadoForm(FlaskForm):
+    nombre = StringField('Nombre del Estado', validators=[
+        DataRequired(),
+        Length(min=3, max=50)
+    ])
+    submit = SubmitField('Guardar')
+
 class ControlEstado:
     def __init__(self, bp):
         self.bp = bp
         self._registrar_rutas()
     
     def _registrar_rutas(self):
-        # Rutas para Estados
         self.bp.route('/estados', endpoint='estados_index')(self.index)
         self.bp.route('/estados/nuevo', methods=['GET', 'POST'], endpoint='estados_nuevo')(self.nuevo)
         self.bp.route('/estados/<int:id>/editar', methods=['GET', 'POST'], endpoint='estados_editar')(self.editar)
         self.bp.route('/estados/<int:id>/eliminar', methods=['POST'], endpoint='estados_eliminar')(self.eliminar)
 
-    # Listado de Estados
     @requiere_login
     @requiere_rol('Administrador General', 'Supervisor Historial')
     def index(self):
@@ -365,14 +390,15 @@ class ControlEstado:
                             estados=estados,
                             usuario_actual=usuario_actual)
 
-    # Nuevo Estado
     @requiere_login
     @requiere_rol('Administrador General')
     def nuevo(self):
         usuario_actual = Usuario.query.get(session['id_usuario'])
-        if request.method == 'POST':
+        form = EstadoForm()
+        
+        if form.validate_on_submit():
             try:
-                estado = ChipEstado(nombre=request.form['nombre'])
+                estado = ChipEstado(nombre=form.nombre.data)
                 db.session.add(estado)
                 db.session.commit()
                 flash('Estado creado exitosamente', 'success')
@@ -380,29 +406,33 @@ class ControlEstado:
             except Exception as e:
                 db.session.rollback()
                 flash(f'Error al crear estado: {str(e)}', 'danger')
+        
         return render_template('historial/Control_Historial/Agregar_ControlHistorial/Agregar_Estado.html',
+                            form=form,
                             usuario_actual=usuario_actual)
 
-    # Editar Estado
     @requiere_login
     @requiere_rol('Administrador General')
     def editar(self, id):
         usuario_actual = Usuario.query.get(session['id_usuario'])
         estado = ChipEstado.query.get_or_404(id)
-        if request.method == 'POST':
+        form = EstadoForm(obj=estado)
+        
+        if form.validate_on_submit():
             try:
-                estado.nombre = request.form['nombre']
+                estado.nombre = form.nombre.data
                 db.session.commit()
                 flash('Estado actualizado exitosamente', 'success')
                 return redirect(url_for('historial.estados_index'))
             except Exception as e:
                 db.session.rollback()
                 flash(f'Error al actualizar estado: {str(e)}', 'danger')
+        
         return render_template('historial/Control_Historial/Editar_ControlHistorial/Editar_Estado.html',
+                            form=form,
                             estado=estado,
                             usuario_actual=usuario_actual)
 
-    # Eliminar Estado
     @requiere_login
     @requiere_rol('Administrador General')
     def eliminar(self, id):
@@ -419,7 +449,6 @@ class ControlEstado:
             flash(f'Error al eliminar estado: {str(e)}', 'danger')
         return redirect(url_for('historial.estados_index'))
 
-
 # ==================================================
 # CONTROLADOR PRINCIPAL DE HISTORIAL
 # ==================================================
@@ -432,7 +461,6 @@ class ControlHistorial:
         
         self.bp.route('', endpoint='dashboard')(self.dashboard)
 
-    # Dashboard de Historial
     @requiere_login
     @requiere_rol('Administrador General', 'Supervisor Historial')
     def dashboard(self):
@@ -449,7 +477,6 @@ class ControlHistorial:
                             total_chips=total_chips,
                             estados_chips=estados_chips,
                             usuario_actual=usuario_actual)
-
 
 # ==================================================
 # INSTANCIA PRINCIPAL
